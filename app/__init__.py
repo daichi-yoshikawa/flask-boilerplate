@@ -1,16 +1,20 @@
 import dotenv
+import logging.config
 import os
 
 from flask import Flask
+from flask_jwt_extended import JWTManager
 
-from app.auth import jwt
 from app.models import db, migrate
+from app.utils.exceptions import DotEnvNotFound, InvalidModeError, ModeNotSet
 from app.utils.redis import redis
-from config import config
+from config import config, MODES
 
-def configure_app(app, mode):
-  app.config.update(config[mode]['app'])
 
+logging.config.dictConfig(config['logger']['default'])
+logger = logging.getLogger(__name__)
+
+jwt = JWTManager()
 
 def init_db(app):
   db.init_app(app)
@@ -26,21 +30,30 @@ def register_blueprints(app):
 
 
 def create_app():
-  try:
-    mode = os.environ['FLASK_ENV']
-  except KeyError:
-    raise KeyError('FLASK_ENV must be set.')
+  if 'FLASK_ENV' not in os.environ:
+    msg = 'FLASK_ENV must be set.'
+    logger.fatal(msg)
+    raise ModeNotSet(msg)
+  mode = os.environ['FLASK_ENV']
+  if mode not in MODES:
+    msg = f'Invalid FLASK_ENV is set. FLASK_ENV must be in {MODES}.'
+    logger.fatal(msg)
+    raise InvalidModeError(msg)
+
   if not os.path.exists(f'dot.env.{mode}'):
-    raise RuntimeError(f'dot.env.{mode} was not found.')
+    msg = f'dot.env.{mode} was not found.'
+    logger.fatal(msg)
+    raise DotEnvNotFound(msg)
+
   dotenv.load_dotenv(f'dot.env.{mode}')
-
   app = Flask(
-    __name__, template_folder=os.environ['FLASK_TEMPLATE_DIR'],
-    static_folder=os.environ['FLASK_STATIC_DIR'])
+      __name__, template_folder=os.environ['FLASK_TEMPLATE_DIR'],
+      static_folder=os.environ['FLASK_STATIC_DIR'])
 
-  configure_app(app, mode)
-  init_db(app)
+  app.config.update(config['app'][mode])
   jwt.init_app(app)
+  init_db(app)
   register_blueprints(app)
 
   return app
+

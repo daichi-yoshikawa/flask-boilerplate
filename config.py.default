@@ -5,7 +5,6 @@ Config used not only by flask application will be defined by dotenv.
 References:
 - SQLALCHEMY_BINDS: https://flask-sqlalchemy.palletsprojects.com/en/2.x/binds/
 - JWT Options: https://flask-jwt-extended.readthedocs.io/en/stable/options/
-
 """
 import os
 
@@ -24,53 +23,78 @@ JWT_BLACKLIST_ENABLED = True
 JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 
 config = {
-  'default': {
-    'app': {
-      'SECRET_KEY': get_random_string(32),
-      'DEBUG': True,
-      'TESTING': False,
-      'SQLALCHEMY_DATABASE_URI': \
-          'sqlite:///' + os.path.join(BASE_DIR, 'data.sqlite'),
-      'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-      'SQLALCHEMY_BINDS': {}, # Used when multiple databases are used.
-      'JWT_ACCESS_TOKEN_EXPIRES': JWT_ACCESS_TOKEN_EXPIRES,
-      'JWT_REFRESH_TOKEN_EXPIRES': JWT_REFRESH_TOKEN_EXPIRES,
-      'JWT_TOKEN_LOCATION': JWT_TOKEN_LOCATION,
-      'JWT_HEADER_NAME': JWT_HEADER_NAME,
-      'JWT_HEADER_TYPE': JWT_HEADER_TYPE,
-      'JWT_BLACKLIST_ENABLED': JWT_BLACKLIST_ENABLED,
-      'JWT_BLACKLIST_TOKEN_CHECKS': JWT_BLACKLIST_TOKEN_CHECKS,
-      'JWT_SECRET_KEY': get_random_string(32),
+  'app': {},
+  'logger': {},
+}
+
+config['app']['default'] = {
+  'SECRET_KEY': get_random_string(32),
+  'DEBUG': True,
+  'TESTING': False,
+  'SQLALCHEMY_DATABASE_URI': \
+      'sqlite:///' + os.path.join(BASE_DIR, 'data.sqlite'),
+  'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+  'SQLALCHEMY_BINDS': {}, # Used when multiple databases are used.
+  'JWT_ACCESS_TOKEN_EXPIRES': JWT_ACCESS_TOKEN_EXPIRES,
+  'JWT_REFRESH_TOKEN_EXPIRES': JWT_REFRESH_TOKEN_EXPIRES,
+  'JWT_TOKEN_LOCATION': JWT_TOKEN_LOCATION,
+  'JWT_HEADER_NAME': JWT_HEADER_NAME,
+  'JWT_HEADER_TYPE': JWT_HEADER_TYPE,
+  'JWT_BLACKLIST_ENABLED': JWT_BLACKLIST_ENABLED,
+  'JWT_BLACKLIST_TOKEN_CHECKS': JWT_BLACKLIST_TOKEN_CHECKS,
+  'JWT_SECRET_KEY': get_random_string(32),
+}
+
+config['logger']['default'] = {
+  'version': 1,
+  'formatters': {
+    'default': {
+      'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
     },
-    'logger': {
+  },
+  'handlers': {
+    'console': {
+      'class': 'logging.StreamHandler',
+      'level': 'DEBUG',
+      'formatter': 'default',
+      'stream': 'ext://sys.stdout',
+    },
+    'file': {
+      'class': 'logging.FileHandler',
+      'level': 'DEBUG',
+      'formatter': 'default',
+      'filename': 'log/application.log',
+    },
+  },
+  'loggers': {
+    'app': {
+      'handlers': ['console', 'file'],
+      'level': 'DEBUG',
     },
   },
 }
 
 for mode in MODES:
-  config[mode] = {}
-  config[mode]['app'] = dict(config['default']['app'])
-  config[mode]['logger'] = dict(config['default']['logger'])
+  config['app'][mode] = dict(config['app']['default'])
+  config['logger'][mode] = dict(config['logger']['default'])
 
-config['development']['app'].update({
+config['app']['development'].update({
   'DEBUG': True,
   'TESTING': False,
   'SQLALCHEMY_DATABASE_URI':\
       'sqlite:///' + os.path.join(BASE_DIR, 'data-dev.sqlite'),
 })
 
-config['production']['app'].update({
+config['app']['production'].update({
   'DEBUG': False,
   'TESTING': False,
+  'SQLALCHEMY_DATABASE_URI':\
+      'sqlite:///' + os.path.join(BASE_DIR, 'data-pro.sqlite'),
 })
 
-config['testing']['app'].update({
+config['app']['testing'].update({
   'DEBUG': False,
   'TESTING': True,
+  'SQLALCHEMY_DATABASE_URI':\
+      'sqlite:///' + os.path.join(BASE_DIR, 'data-test.sqlite'),
 })
-
-config['development']['logger'].update({})
-
-config['production']['logger'].update({})
-
-config['testing']['logger'].update({})
