@@ -1,0 +1,76 @@
+"""
+This module implements config used by flask application.
+Config used not only by flask application will be defined by dotenv.
+
+References:
+- SQLALCHEMY_BINDS: https://flask-sqlalchemy.palletsprojects.com/en/2.x/binds/
+- JWT Options: https://flask-jwt-extended.readthedocs.io/en/stable/options/
+
+"""
+import os
+
+from app.utils.random import get_random_string
+
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+MODES = ['development', 'production', 'testing']
+
+JWT_ACCESS_TOKEN_EXPIRES = 60 * 15
+JWT_REFRESH_TOKEN_EXPIRES = 60 * 60 * 24 * 200
+JWT_TOKEN_LOCATION = ['headers']
+JWT_HEADER_NAME = 'Authorization'
+JWT_HEADER_TYPE = 'Bearer'
+JWT_BLACKLIST_ENABLED = True
+JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
+
+config = {
+  'default': {
+    'app': {
+      'SECRET_KEY': get_random_string(32),
+      'DEBUG': True,
+      'TESTING': False,
+      'SQLALCHEMY_DATABASE_URI': \
+          'sqlite:///' + os.path.join(BASE_DIR, 'data.sqlite'),
+      'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+      'SQLALCHEMY_BINDS': {}, # Used when multiple databases are used.
+      'JWT_ACCESS_TOKEN_EXPIRES': JWT_ACCESS_TOKEN_EXPIRES,
+      'JWT_REFRESH_TOKEN_EXPIRES': JWT_REFRESH_TOKEN_EXPIRES,
+      'JWT_TOKEN_LOCATION': JWT_TOKEN_LOCATION,
+      'JWT_HEADER_NAME': JWT_HEADER_NAME,
+      'JWT_HEADER_TYPE': JWT_HEADER_TYPE,
+      'JWT_BLACKLIST_ENABLED': JWT_BLACKLIST_ENABLED,
+      'JWT_BLACKLIST_TOKEN_CHECKS': JWT_BLACKLIST_TOKEN_CHECKS,
+      'JWT_SECRET_KEY': get_random_string(32),
+    },
+    'logger': {
+    },
+  },
+}
+
+for mode in MODES:
+  config[mode] = {}
+  config[mode]['app'] = dict(config['default']['app'])
+  config[mode]['logger'] = dict(config['default']['logger'])
+
+config['development']['app'].update({
+  'DEBUG': True,
+  'TESTING': False,
+  'SQLALCHEMY_DATABASE_URI':\
+      'sqlite:///' + os.path.join(BASE_DIR, 'data-dev.sqlite'),
+})
+
+config['production']['app'].update({
+  'DEBUG': False,
+  'TESTING': False,
+})
+
+config['testing']['app'].update({
+  'DEBUG': False,
+  'TESTING': True,
+})
+
+config['development']['logger'].update({})
+
+config['production']['logger'].update({})
+
+config['testing']['logger'].update({})
