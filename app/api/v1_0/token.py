@@ -1,3 +1,5 @@
+import logging
+
 from flask import jsonify, make_response, request
 from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_restful import Resource
@@ -6,6 +8,8 @@ from werkzeug.security import check_password_hash
 
 from app.models.user import User
 
+
+logger = logging.getLogger(__name__)
 
 class TokenAPI(Resource):
   def post(self):
@@ -33,11 +37,13 @@ class TokenAPI(Resource):
         'refresh_token': refresh_token,
       }
     except Exception as e:
+      logger.error(e)
       ret = { 'error': { 'msg': str(e) } }
 
       if status == HTTPStatus.OK:
         status = HTTPStatus.BAD_REQUEST
         ret['error']['msg'] = 'Bad request was sent.'
+      logger.error(ret)
 
     return make_response(jsonify(ret), status)
 

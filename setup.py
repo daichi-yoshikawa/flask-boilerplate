@@ -15,8 +15,8 @@ print(about)
 setup(
   name='flask-app',#about['__title__'],
   version='1.0.0',#about['__version__'],
-  packages=find_packages(where='app'),
-  package_dir={'': 'app'},
+  packages=find_packages(where='./'),
+  #package_dir={'': 'app'},
   install_requires=['flask'],
   extras_require={'test': ['pytest', 'pytest-cov']},
 )
