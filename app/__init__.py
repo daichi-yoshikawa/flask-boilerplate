@@ -5,7 +5,7 @@ import os
 from flask import Flask
 from flask_jwt_extended import JWTManager
 
-from app.models import db, migrate
+from app.models import db, ma, migrate
 from app.utils.exceptions import DotEnvNotFound, InvalidModeError, ModeNotSet
 from app.utils.redis import redis
 from config import config, MODES
@@ -18,6 +18,7 @@ jwt = JWTManager()
 
 def init_db(app):
   db.init_app(app)
+  ma.init_app(app)
   migrate.init_app(app, db)
   redis.init(host='localhost', port=6729, db=0)
 

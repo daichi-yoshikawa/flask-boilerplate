@@ -9,9 +9,18 @@ You're supposed to configure 2 files mode-wise.
 The above files must be stored under root directory.
 
 ## Run
-
+```
+FLASK_ENV=<mode> FLASK_APP=app flask run
+```
 
 ## DB migration
 ```
+FLASK_ENV=<mode> FLASK_APP=app flask db init
+flask db migrate -m "initial migration"
+flask db upgrade
+```
 
+## Execute pytest
+```
+pip install -e .
 ```

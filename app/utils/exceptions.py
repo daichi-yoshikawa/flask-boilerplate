@@ -11,5 +11,3 @@ class InvalidModeError(Exception):
 class DotEnvNotFound(Exception):
   def __init__(self, message):
     super().__init__(message)
-
-

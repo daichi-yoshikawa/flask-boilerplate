@@ -20,17 +20,3 @@ setup(
   install_requires=['flask'],
   extras_require={'test': ['pytest', 'pytest-cov']},
 )
-
-"""
-
-
-setup(
-
-
-  author=about['__author__'],
-  author_email=about['__author_email__'],
-  packages=find_packages(where='app'),
-
-  extras_require={'test': ['pytest', 'pytest-cov']},
-)
-"""

@@ -1,3 +1,6 @@
+*.sqlite
+!tests/*.sqlite
+
 .env*
 dot.env*
 !dot.env.default
