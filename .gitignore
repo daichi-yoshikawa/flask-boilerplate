@@ -1,8 +1,8 @@
 *.sqlite
 !tests/*.sqlite
 
-.env*
-dot.env*
+.env.d/*.env*
+!.env.d/
 !dot.env.default
 
 config.py*
