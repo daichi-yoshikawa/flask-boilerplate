@@ -26,6 +26,9 @@ class UserListAPI(Resource):
 
     try:
       data = request.get_json()
+      if data is None:
+        status = HTTPStatus.BAD_REQUEST
+        raise Exception('Request is empty.')
       query = User.query.filter_by(email=data['email'])
       user = query.first()
 
@@ -37,9 +40,7 @@ class UserListAPI(Resource):
       else:
         status = HTTPStatus.OK
 
-      query = User.query.filter_by(email=data['email'])
-      ret = UserSchema(many=False).dump(query.first())
-      ret['url'] = get_url(tail_url=ret['id'])
+      ret['url'] = get_url(tail_url=user.id)
     except Exception as e:
       logger.error(e)
       db.session.rollback()
