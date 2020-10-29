@@ -96,5 +96,5 @@ config['app']['testing'].update({
   'DEBUG': False,
   'TESTING': True,
   'SQLALCHEMY_DATABASE_URI':\
-      'sqlite:///' + os.path.join(BASE_DIR, 'data-test.sqlite'),
+      'sqlite:///' + os.path.join(BASE_DIR, 'tests/data-test.sqlite'),
 })
