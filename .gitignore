@@ -8,8 +8,6 @@ dot.env*
 config.py*
 !config.py.default
 
-migrations/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
