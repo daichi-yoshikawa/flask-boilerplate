@@ -3,7 +3,6 @@ aniso8601==8.0.0
 attrs==20.2.0
 click==7.1.2
 Flask==1.1.2
--e git+git@github.com:daichi-yoshikawa/flask-boilerplate.git@58e34f208aa5a04465bf6a5daf6176532691c6f1#egg=flask_app
 Flask-JWT-Extended==3.24.1
 flask-marshmallow==0.14.0
 Flask-Migrate==2.5.3
