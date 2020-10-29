@@ -29,16 +29,19 @@ class UserListAPI(Resource):
       if data is None:
         status = HTTPStatus.BAD_REQUEST
         raise Exception('Request is empty.')
-      query = User.query.filter_by(email=data['email'])
-      user = query.first()
 
-      if user is None:
-        data['password'] = generate_password_hash(data['password'])
-        user = User(**data)
-        db.session.add(user)
-        db.session.commit()
-      else:
-        status = HTTPStatus.OK
+      if User.query.filter_by(name=data['name']).count() > 0:
+        status = HTTPStatus.CONFLICT
+        raise Exception(f"Username:{data['name']} is already used.")
+
+      if User.query.filter_by(email=data['email']).count() > 0:
+        status = HTTPStatus.CONFLICT
+        raise Exception(f"Email:{data['email']} is already used.")
+
+      data['password'] = generate_password_hash(data['password'])
+      user = User(**data)
+      db.session.add(user)
+      db.session.commit()
 
       ret['url'] = get_url(tail_url=user.id)
     except Exception as e:
@@ -52,9 +55,6 @@ class UserListAPI(Resource):
       logger.error(ret)
 
     return make_response(jsonify(ret), status)
-
-  def get(self):
-    return {'user': 'list'}
 
 
 class UserAPI(Resource):
@@ -74,7 +74,7 @@ class UserAPI(Resource):
       ret = UserSchema(many=False).dump(query.first())
       if not ret:
         status = HTTPStatus.NOT_FOUND
-        raise Exception(f'User {id} was not found.')
+        raise Exception(f'User ID:{id} was not found.')
       ret['url'] = get_url(tail_url='')
     except Exception as e:
       logger.error(e)
