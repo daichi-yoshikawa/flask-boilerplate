@@ -41,12 +41,12 @@ def create_app():
     logger.fatal(msg)
     raise InvalidModeError(msg)
 
-  if not os.path.exists(f'dot.env.{mode}'):
-    msg = f'dot.env.{mode} was not found.'
+  if not os.path.exists(f'./.env.d/.env.{mode}'):
+    msg = f'./.env.d/.env.{mode} was not found.'
     logger.fatal(msg)
     raise DotEnvNotFound(msg)
 
-  dotenv.load_dotenv(f'dot.env.{mode}')
+  dotenv.load_dotenv(f'./.env.d/.env.{mode}')
   app = Flask(
       __name__, template_folder=os.environ['FLASK_TEMPLATE_DIR'],
       static_folder=os.environ['FLASK_STATIC_DIR'])

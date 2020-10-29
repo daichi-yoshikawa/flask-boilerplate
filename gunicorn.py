@@ -28,9 +28,10 @@ if __name__ == '__main__':
     if 'FLASK_ENV' not in os.environ:
       raise Exception('FLASK_ENV is not set.')
     mode = os.environ['FLASK_ENV']
-    if not os.path.exists(f'dot.env.{mode}'):
-      raise Exception(f'dot.env.{mode} was not found.')
-    dotenv.load_dotenv(f'dot.env.{mode}')
+
+    if not os.path.exists(f'./.env.d/.env.{mode}'):
+      raise Exception(f'./.env.d/.env.{mode} was not found.')
+    dotenv.load_dotenv(f'./.env.d/.env.{mode}')
 
     config = Config()
 
