@@ -7,26 +7,26 @@ import pytest
 from app import create_app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def init_env():
   os.environ['FLASK_ENV'] = 'testing'
   os.environ['FLASK_APP'] = 'app'
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def app(init_env):
   app = create_app()
   return app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def client(app):
   assert app.config['ENV'] == 'testing'
   return app.test_client()
 
 
-@pytest.fixture(scope="session")
-def db(app):
+@pytest.fixture(scope='class')
+def init_db(app):
   assert app.config['ENV'] == 'testing'
   assert 'test' in app.config['SQLALCHEMY_DATABASE_URI']
 
@@ -38,11 +38,11 @@ def db(app):
     db.drop_all()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def base_url():
   return 'http://localhost'
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def headers():
   return {'Content-Type': 'application/json'}

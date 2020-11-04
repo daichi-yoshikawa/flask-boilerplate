@@ -1,6 +1,7 @@
 import logging
 
 from flask import jsonify, make_response, request
+from flask_jwt_extended import jwt_required
 from flask_restful import Resource
 from http import HTTPStatus
 from werkzeug.security import generate_password_hash
@@ -8,6 +9,7 @@ from werkzeug.security import generate_password_hash
 from app.models import db
 from app.models.user import User, UserSchema
 from app.api.utils import get_url
+from app.utils.exceptions import ApiException
 
 logger = logging.getLogger(__name__)
 
@@ -27,16 +29,15 @@ class UserListAPI(Resource):
     try:
       data = request.get_json()
       if data is None:
-        status = HTTPStatus.BAD_REQUEST
-        raise Exception('Request is empty.')
+        raise ApiException('Request is empty.', status=HTTPStatus.BAD_REQUEST)
 
       if User.query.filter_by(name=data['name']).count() > 0:
-        status = HTTPStatus.CONFLICT
-        raise Exception(f"Username:{data['name']} is already used.")
+        raise ApiException(
+          f"Username:{data['name']} is already used.", status=HTTPStatus.CONFLICT)
 
       if User.query.filter_by(email=data['email']).count() > 0:
-        status = HTTPStatus.CONFLICT
-        raise Exception(f"Email:{data['email']} is already used.")
+        raise ApiException(
+          f"Email:{data['email']} is already used.", status=HTTPStatus.CONFLICT)
 
       data['password'] = generate_password_hash(data['password'])
       user = User(**data)
@@ -44,8 +45,12 @@ class UserListAPI(Resource):
       db.session.commit()
 
       ret['url'] = get_url(tail_url=user.id)
+    except ApiException as e:
+      status = e.status
+      ret = {'error': {'message': str(e)}}
+      db.session.rollback()
+      logger.error(ret)
     except Exception as e:
-      logger.error(e)
       db.session.rollback()
       msg = str(e)
       if status == HTTPStatus.CREATED:
@@ -64,6 +69,7 @@ class UserAPI(Resource):
   PUT: Update user data.
   DELETE: Delete user account.
   """
+  @jwt_required
   def get(self, id):
     """Return user."""
     status = HTTPStatus.OK
@@ -73,11 +79,14 @@ class UserAPI(Resource):
       query = User.query.filter_by(id=id)
       ret = UserSchema(many=False).dump(query.first())
       if not ret:
-        status = HTTPStatus.NOT_FOUND
-        raise Exception(f'User ID:{id} was not found.')
+        raise ApiException(
+          f'User ID:{id} was not found.', status=HTTPStatus.NOT_FOUND)
       ret['url'] = get_url(tail_url='')
+    except ApiException as e:
+      status = e.status
+      ret = {'error': {'message': str(e)}}
+      logger.error(ret)
     except Exception as e:
-      logger.error(e)
       ret = { 'error': { 'message': str(e) } }
       logger.error(ret)
 

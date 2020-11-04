@@ -3,8 +3,9 @@ import logging.config
 import os
 
 from flask import Flask
-from flask_jwt_extended import JWTManager
 
+from app.auth.blacklist import blacklist
+from app.auth.jwt import jwt
 from app.models import db, ma, migrate
 from app.utils.exceptions import DotEnvNotFound, InvalidModeError, ModeNotSet
 from app.utils.redis import redis
@@ -13,8 +14,6 @@ from config import config, MODES
 
 logging.config.dictConfig(config['logger']['default'])
 logger = logging.getLogger(__name__)
-
-jwt = JWTManager()
 
 def init_db(app):
   db.init_app(app)
@@ -52,6 +51,7 @@ def create_app():
       static_folder=os.environ['FLASK_STATIC_DIR'])
 
   app.config.update(config['app'][mode])
+  blacklist.init_app(app)
   jwt.init_app(app)
   init_db(app)
   register_blueprints(app)

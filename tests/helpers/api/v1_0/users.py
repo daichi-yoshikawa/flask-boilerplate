@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 
-users_to_signup = [
+users = [
   {
     'request': dict(name='test001', email='test001@test', password='testtest'),
     'expected': dict(url='http://localhost/api/v1_0/users/1/'),
@@ -17,6 +17,10 @@ users_to_signup = [
     'expected': dict(url='http://localhost/api/v1_0/users/3/'),
     'status_code': HTTPStatus.CREATED,
   },
+]
+
+users_to_signup = list(users)
+users_to_signup += [
   {
     'request': dict(name='test001', email='test004@test', password='testtest'),
     'expected': dict(error={'message': 'Username:test001 is already used.'}),
