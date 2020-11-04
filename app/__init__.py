@@ -1,4 +1,4 @@
-import dotenv
+import logging
 import logging.config
 import os
 
@@ -7,9 +7,7 @@ from flask import Flask
 from app.auth.blacklist import blacklist
 from app.auth.jwt import jwt
 from app.models import db, ma, migrate
-from app.utils.exceptions import DotEnvNotFound, InvalidModeError, ModeNotSet
-from app.utils.redis import redis
-from config import config, MODES
+from config import config, get_mode_from_env, load_dotenv
 
 
 logging.config.dictConfig(config['logger']['default'])
@@ -19,7 +17,6 @@ def init_db(app):
   db.init_app(app)
   ma.init_app(app)
   migrate.init_app(app, db)
-  redis.init(host='localhost', port=6729, db=0)
 
 
 def register_blueprints(app):
@@ -30,22 +27,9 @@ def register_blueprints(app):
 
 
 def create_app():
-  if 'FLASK_ENV' not in os.environ:
-    msg = 'FLASK_ENV must be set.'
-    logger.fatal(msg)
-    raise ModeNotSet(msg)
-  mode = os.environ['FLASK_ENV']
-  if mode not in MODES:
-    msg = f'Invalid FLASK_ENV is set. FLASK_ENV must be in {MODES}.'
-    logger.fatal(msg)
-    raise InvalidModeError(msg)
+  mode = get_mode_from_env(logger)
+  load_dotenv(mode, logger)
 
-  if not os.path.exists(f'./.env.d/.env.{mode}'):
-    msg = f'./.env.d/.env.{mode} was not found.'
-    logger.fatal(msg)
-    raise DotEnvNotFound(msg)
-
-  dotenv.load_dotenv(f'./.env.d/.env.{mode}')
   app = Flask(
       __name__, template_folder=os.environ['FLASK_TEMPLATE_DIR'],
       static_folder=os.environ['FLASK_STATIC_DIR'])

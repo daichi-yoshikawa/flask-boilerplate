@@ -8,11 +8,53 @@ References:
 """
 import os
 
-from app.utils.random import get_random_string
+import dotenv
+
+from app.utils.exceptions import DotEnvNotFound, InvalidModeError, ModeNotSet
 
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 MODES = ['development', 'production', 'testing']
+
+
+def get_mode_from_env(logger=None):
+  if 'FLASK_ENV' not in os.environ:
+    msg = f'FLASK_ENV must be set. values: {MODES}'
+    if logger is not None:
+      logger.fatal(msg)
+    raise ModeNotSet(msg)
+  mode = os.environ['FLASK_ENV']
+  if mode not in MODES:
+    msg = f'Invalid FLASK_ENV({mode}) is set. correct values: {MODES}'
+    if logger is not None:
+      logger.fatal(msg)
+    raise InvalidModeError(msg)
+
+  return mode
+
+
+def load_dotenv(mode, logger=None):
+  if not os.path.exists(f'./.env.d/.env.{mode}'):
+    msg = f'./.env.d/.env.{mode} was not found.'
+    if logger is not None:
+      logger.fatal(msg)
+    raise DotEnvNotFound(msg)
+
+  dotenv.load_dotenv(f'./.env.d/.env.{mode}')
+
+
+"""
+Though load_dotenv function is called in create_app() in app/__init__.py,
+it also needs to be called config.py.
+- When 'flask run' is used, config.py is loaded first, and then
+  create_app() is called. -> load_dotenv must be done in config.py.
+- When 'python gunicorn.py' is used, create_app() is called first
+  so load_dotenv in config.py is not needed.
+To support both 'flask run' and 'python gunicorn.py',
+load_dotenv function is called in both app/__init__.py and config.py.
+"""
+load_dotenv(get_mode_from_env())
+
 
 JWT_ACCESS_TOKEN_EXPIRES = 60 * 15
 JWT_REFRESH_TOKEN_EXPIRES = 60 * 60 * 24 * 200
@@ -28,7 +70,7 @@ config = {
 }
 
 config['app']['default'] = {
-  'SECRET_KEY': get_random_string(32),
+  'SECRET_KEY': os.environ['FLASK_SECRET_KEY'],
   'DEBUG': True,
   'TESTING': False,
   'SQLALCHEMY_DATABASE_URI': \
@@ -42,7 +84,7 @@ config['app']['default'] = {
   'JWT_HEADER_TYPE': JWT_HEADER_TYPE,
   'JWT_BLACKLIST_ENABLED': JWT_BLACKLIST_ENABLED,
   'JWT_BLACKLIST_TOKEN_CHECKS': JWT_BLACKLIST_TOKEN_CHECKS,
-  'JWT_SECRET_KEY': get_random_string(32),
+  'JWT_SECRET_KEY': os.environ['JWT_SECRET_KEY'],
 }
 
 config['logger']['default'] = {
