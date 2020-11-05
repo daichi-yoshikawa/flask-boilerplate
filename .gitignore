@@ -1,5 +1,4 @@
 *.sqlite
-!tests/*.sqlite
 
 .env.d/*.env*
 !.env.d/

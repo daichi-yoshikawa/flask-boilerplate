@@ -2,19 +2,16 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
 
+os.environ['FLASK_ENV'] = 'testing'
+os.environ['FLASK_APP'] = 'app'
+
 import pytest
 
 from app import create_app
 
 
 @pytest.fixture(scope='session')
-def init_env():
-  os.environ['FLASK_ENV'] = 'testing'
-  os.environ['FLASK_APP'] = 'app'
-
-
-@pytest.fixture(scope='session')
-def app(init_env):
+def app():
   app = create_app()
   return app
 

@@ -85,6 +85,11 @@ config['app']['default'] = {
   'JWT_BLACKLIST_ENABLED': JWT_BLACKLIST_ENABLED,
   'JWT_BLACKLIST_TOKEN_CHECKS': JWT_BLACKLIST_TOKEN_CHECKS,
   'JWT_SECRET_KEY': os.environ['JWT_SECRET_KEY'],
+  'BLACKLIST_STORAGE_TYPE': os.environ['BLACKLIST_STORAGE_TYPE'],
+  'REDIS_HOST': os.environ['REDIS_HOST'],
+  'REDIS_PASSWORD': os.environ['REDIS_PASSWORD'],
+  'REDIS_PORT': os.environ['REDIS_PORT'],
+  'REDIS_DB_INDEX': os.environ['REDIS_DB_INDEX'],
 }
 
 config['logger']['default'] = {

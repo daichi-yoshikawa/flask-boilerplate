@@ -23,12 +23,20 @@ class Storage:
     msg = self.get_error_msg('get')
     raise NotImplementedError(msg)
 
-  def add_candidate(self, jti):
-    msg = self.get_error_msg('add_candidate')
+  def probate_access_token(self, jti):
+    msg = self.get_error_msg('probate_access_token')
     raise NotImplementedError(msg)
 
-  def revoke(self, jti):
-    msg = self.get_error_msg('revoke')
+  def probate_refresh_token(self, jti):
+    msg = self.get_error_msg('probate_refresh_token')
+    raise NotImplementedError(msg)
+
+  def revoke_access_token(self, jti):
+    msg = self.get_error_msg('revoke_access_token')
+    raise NotImplementedError(msg)
+
+  def revoke_refresh_token(self, jti):
+    msg = self.get_error_msg('revoke_refresh_token')
     raise NotImplementedError(msg)
 
   def delete(self, jti):
@@ -44,7 +52,7 @@ class MemoryStorage(Storage):
   def __init__(self):
     self.storage = dict()
     msg = """Blacklist to store revoked token is stored in memory with current config. Once the server is down, whole blacklist is gone. If you'd like to persist blacklist, use redis as storage."""
-    logger.error(msg)
+    logger.warning(msg)
 
   def init_app(self, app):
     pass
@@ -55,10 +63,16 @@ class MemoryStorage(Storage):
     else:
       return self.storage[jti]
 
-  def add_candidate(self, jti):
+  def probate_access_token(self, jti):
     self.storage[jti] = False
 
-  def revoke(self, jti):
+  def probate_refresh_token(self, jti):
+    self.storage[jti] = False
+
+  def revoke_access_token(self, jti):
+    self.storage[jti] = True
+
+  def revoke_refresh_token(self, jti):
     self.storage[jti] = True
 
   def delete(self, jti):
@@ -70,19 +84,31 @@ class RedisStorage(Storage):
     self.storage = None
 
   def init_app(self, app):
-    self.storage = redis.StrictRedis(host='localhost', port=6379, db=0)
-    self.expire_sec = 100000
+    host = app.config['REDIS_HOST']
+    password = app.config['REDIS_PASSWORD']
+    port = app.config['REDIS_PORT']
+    db = app.config['REDIS_DB_INDEX']
+
+    self.storage = redis.StrictRedis(host=host, port=port, db=db)
+    self.access_token_expires = int(app.config['JWT_ACCESS_TOKEN_EXPIRES']*1.2)
+    self.refresh_token_expires = int(app.config['JWT_REFRESH_TOKEN_EXPIRES']*1.2)
 
   def get(self, jti):
     entry = self.storage.get(jti)
     ret = None if entry is None else entry == 'true'
     return ret
 
-  def add_candidate(self, jti):
-    self.storage.set(jti, 'false', self.expire_sec)
+  def probate_access_token(self, jti):
+    self.storage.set(jti, 'false', self.access_token_expires)
 
-  def revoke(self, jti):
-    self.storage.set(jti, 'true', self.expire_sec)
+  def probate_refresh_token(self, jti):
+    self.storage.set(jti, 'false', self.refresh_token_expires)
+
+  def revoke_access_token(self, jti):
+    self.storage.set(jti, 'true', self.access_token_expires)
+
+  def revoke_refresh_token(self, jti):
+    self.storage.set(jti, 'true', self.refresh_token_expires)
 
   def delete(self, jti):
     self.storage.delete(jti)
@@ -93,7 +119,7 @@ class Blacklist:
     self.storage = None
 
   def init_app(self, app):
-    storage_type = 'memory'#app.config['BLACKLIST_STORAGE_TYPE']
+    storage_type = app.config['BLACKLIST_STORAGE_TYPE']
     if storage_type not in BlacklistStorage.types:
       msg = f'Not supported storage type: {storage_type}.'
       raise ValueError(msg)
@@ -118,11 +144,18 @@ class Blacklist:
     revoked = False if revoked is None else revoked
     return revoked
 
-  def add_candidate(self, jti):
-    self.storage.add_candidate(jti)
+  def probate_access_token(self, jti):
+    self.storage.probate_access_token(jti)
 
-  def revoke(self, jti):
-    self.storage.revoke(jti)
+  def probate_refresh_token(self, jti):
+    self.storage.probate_refresh_token(jti)
+
+  def revoke_access_token(self, jti):
+    self.storage.revoke_access_token(jti)
+    logger.debug(f'token: {jti} was revoked.')
+
+  def revoke_refresh_token(self, jti):
+    self.storage.revoke_refresh_token(jti)
     logger.debug(f'token: {jti} was revoked.')
 
   def delete(self, jti):
