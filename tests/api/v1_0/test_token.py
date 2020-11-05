@@ -9,7 +9,6 @@ from helpers.utils import bearer_token
 
 
 url_token = '/api/v1_0/token/'
-#API_URL = '/api/v1_0/token/'
 
 me = dict(name='test001', email='test001@test', password='testtest')
 you = dict(name='test002', email='test002@test', password='testtest')
@@ -40,35 +39,6 @@ def tokens(prepare_users, client, headers):
   assert ret.json['access_token'] != ret.json['refresh_token']
 
   yield (ret.json['access_token'], ret.json['refresh_token'])
-
-
-users = [
-  { # Normal
-    'request': dict(name='test001', email='test001@test', password='testtest'),
-    'expected': ['access_token', 'refresh_token'],
-    'status_code': HTTPStatus.OK,
-  },
-  { # Wrong name
-    'request': dict(name='test111', email='test001@test', password='testtest'),
-    'expected': {'error': {'message': 'User:(test111, test001@test) not found.'}},
-    'status_code': HTTPStatus.NOT_FOUND,
-  },
-  { # Wrong email
-    'request': dict(name='test001', email='test111@test', password='testtest'),
-    'expected': {'error': {'message': 'User:(test001, test111@test) not found.'}},
-    'status_code': HTTPStatus.NOT_FOUND,
-  },
-  { # Wrong password
-    'request': dict(name='test001', email='test001@test', password='test'),
-    'expected': {'error': {'message': 'Wrong password.'}},
-    'status_code': HTTPStatus.UNAUTHORIZED,
-  },
-  { # Wrong all info
-    'request': dict(name='test111', email='test111@test', password='test'),
-    'expected': {'error': {'message': 'User:(test111, test111@test) not found.'}},
-    'status_code': HTTPStatus.NOT_FOUND,
-  },
-]
 
 
 @pytest.mark.usefixtures("prepare_users")
