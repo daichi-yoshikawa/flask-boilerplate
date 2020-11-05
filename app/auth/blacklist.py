@@ -41,7 +41,11 @@ class Storage:
 
   def delete(self, jti):
     msg = self.get_error_msg('delete')
-    raise NotImplementedError()
+    raise NotImplementedError(msg)
+
+  def flushall(self):
+    msg = self.get_error_msg('flushall')
+    raise NotImplementedError(msg)
 
   def get_error_msg(self, method):
     msg = f'{method} must be called from derived class of BlacklistImpl.'
@@ -78,6 +82,9 @@ class MemoryStorage(Storage):
   def delete(self, jti):
     self.storage.pop(jti)
 
+  def flushall(self):
+    self.storage = dict()
+
 
 class RedisStorage(Storage):
   def __init__(self):
@@ -89,13 +96,13 @@ class RedisStorage(Storage):
     port = app.config['REDIS_PORT']
     db = app.config['REDIS_DB_INDEX']
 
-    self.storage = redis.StrictRedis(host=host, port=port, db=db)
+    self.storage = redis.StrictRedis(host=host, port=port, db=db, password=password)
     self.access_token_expires = int(app.config['JWT_ACCESS_TOKEN_EXPIRES']*1.2)
     self.refresh_token_expires = int(app.config['JWT_REFRESH_TOKEN_EXPIRES']*1.2)
 
   def get(self, jti):
     entry = self.storage.get(jti)
-    ret = None if entry is None else entry == 'true'
+    ret = None if entry is None else entry == b'true'
     return ret
 
   def probate_access_token(self, jti):
@@ -112,6 +119,9 @@ class RedisStorage(Storage):
 
   def delete(self, jti):
     self.storage.delete(jti)
+
+  def flushall(self):
+    self.storage.flushdb()
 
 
 class Blacklist:
@@ -160,6 +170,9 @@ class Blacklist:
 
   def delete(self, jti):
     self.storage.delete(jti)
+
+  def flushall(self):
+    self.storage.flushall()
 
 
 blacklist = Blacklist()
