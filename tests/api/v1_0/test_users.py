@@ -5,13 +5,60 @@ from werkzeug.security import generate_password_hash
 
 from app.models import db
 from app.models.user import User
-from helpers.api.v1_0.users import users, users_to_signup, users_to_get
 from helpers.utils import join_url
 
 
-urls = dict(users='/api/v1_0/users/')
-tokens = dict()
+users = [
+  {
+    'request': dict(name='test001', email='test001@test', password='testtest'),
+    'expected': dict(url='http://localhost/api/v1_0/users/1/'),
+    'status_code': HTTPStatus.CREATED,
+  },
+  {
+    'request': dict(name='test002', email='test002@test', password='testtest'),
+    'expected': dict(url='http://localhost/api/v1_0/users/2/'),
+    'status_code': HTTPStatus.CREATED,
+  },
+  {
+    'request': dict(name='test003', email='test003@test', password='testtest'),
+    'expected': dict(url='http://localhost/api/v1_0/users/3/'),
+    'status_code': HTTPStatus.CREATED,
+  },
+]
 
+users_to_signup = list(users)
+users_to_signup += [
+  {
+    'request': dict(name='test001', email='test004@test', password='testtest'),
+    'expected': dict(error={'message': 'Username:test001 is already used.'}),
+    'status_code': HTTPStatus.CONFLICT,
+  },
+  {
+    'request': dict(name='test004', email='test001@test', password='testtest'),
+    'expected': dict(error={'message': 'Email:test001@test is already used.'}),
+    'status_code': HTTPStatus.CONFLICT,
+  },
+]
+
+users_to_get = [
+  {
+    'request': 1,
+    'expected': dict(id=1, name='test001', email='test001@test', agreed_eula=False, url='http://localhost/api/v1_0/users/1/'),
+    'status_code': HTTPStatus.OK,
+  },
+  {
+    'request': 3,
+    'expected': dict(id=3, name='test003', email='test003@test', agreed_eula=False, url='http://localhost/api/v1_0/users/3/'),
+    'status_code': HTTPStatus.OK,
+  },
+  {
+    'request': 100,
+    'expected': dict(error={'message': 'User ID:100 was not found.'}),
+    'status_code': HTTPStatus.NOT_FOUND,
+  },
+]
+
+url_users = '/api/v1_0/users/'
 
 @pytest.mark.usefixtures("init_db")
 class TestUsersAPI:
@@ -19,7 +66,7 @@ class TestUsersAPI:
   def test_post(self, client, headers, user):
     n_users_start = db.session.query(User).count()
     data = user['request']
-    ret = client.post(urls['users'], data=json.dumps(data), headers=headers)
+    ret = client.post(url_users, data=json.dumps(data), headers=headers)
     n_users_end = db.session.query(User).count()
 
     assert ret.json == user['expected']
@@ -46,7 +93,7 @@ class TestUserAPI:
   @pytest.mark.parametrize('user', users_to_get)
   def test_get_without_token(self, client, user):
     n_users_start = db.session.query(User).count()
-    url = join_url(urls['users'], user['request'])
+    url = join_url(url_users, user['request'])
     ret = client.get(url)
     n_users_end = db.session.query(User).count()
 
@@ -70,7 +117,7 @@ class TestUserAPI:
     assert len(ret.json['refresh_token']) > 0
     assert ret.json['access_token'] != ret.json['refresh_token']
 
-    url = join_url(urls['users'], user['request'])
+    url = join_url(url_users, user['request'])
     ret = client.get(url, headers={'Authorization': f"Bearer {ret.json['access_token']}"})
     n_users_end = db.session.query(User).count()
 
