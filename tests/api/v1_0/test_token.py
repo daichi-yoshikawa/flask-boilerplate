@@ -37,6 +37,11 @@ def tokens(prepare_users, client, headers):
   assert len(ret.json['access_token']) > 0
   assert len(ret.json['refresh_token']) > 0
   assert ret.json['access_token'] != ret.json['refresh_token']
+  assert 'access_expires_in' in ret.json
+  assert 'refresh_expires_in' in ret.json
+  assert ret.json['access_expires_in'] > 0
+  assert ret.json['refresh_expires_in'] > 0
+  assert ret.json['refresh_expires_in'] > ret.json['access_expires_in']
 
   yield (ret.json['access_token'], ret.json['refresh_token'])
 
@@ -84,6 +89,11 @@ class TestTokenAPI:
       assert len(ret.json['access_token']) > 0
       assert len(ret.json['refresh_token']) > 0
       assert ret.json['access_token'] != ret.json['refresh_token']
+      assert 'access_expires_in' in ret.json
+      assert 'refresh_expires_in' in ret.json
+      assert ret.json['access_expires_in'] > 0
+      assert ret.json['refresh_expires_in'] > 0
+      assert ret.json['refresh_expires_in'] > ret.json['access_expires_in']
     else:
       assert ret.json == param['expected']
 
@@ -142,6 +152,8 @@ class TestTokenAPI:
     assert ret.status_code == HTTPStatus.OK
     assert 'access_token' in ret.json
     assert len(ret.json['access_token']) > 0
+    assert 'access_expires_in' in ret.json
+    assert ret.json['access_expires_in'] > 0
     new_access_token = ret.json['access_token']
 
     # With old access token, GET fails.
@@ -161,6 +173,8 @@ class TestTokenAPI:
     assert ret.status_code == HTTPStatus.OK
     assert 'access_token' in ret.json
     assert len(ret.json['access_token']) > 0
+    assert 'access_expires_in' in ret.json
+    assert ret.json['access_expires_in'] > 0
 
   def test_delete(self, tokens, client, headers):
     access_token, refresh_token = tokens

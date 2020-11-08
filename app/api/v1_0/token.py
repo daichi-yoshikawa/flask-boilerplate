@@ -1,9 +1,11 @@
 import logging
+import os
 
 from flask import jsonify, make_response, request
 from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import get_jti, get_jwt_identity, get_raw_jwt
 from flask_jwt_extended import jwt_refresh_token_required, jwt_required
+from flask_jwt_extended.config import config
 from flask_restful import Resource
 from http import HTTPStatus
 from werkzeug.security import check_password_hash
@@ -42,9 +44,14 @@ class TokenAPI(Resource):
 
       access_token = create_access_token(identity=user.email)
       refresh_token = create_refresh_token(identity=user.email)
+      access_expires_in = int(config.access_expires.total_seconds())
+      refresh_expires_in = int(config.refresh_expires.total_seconds())
+
       ret = {
         'access_token': access_token,
         'refresh_token': refresh_token,
+        'access_expires_in': access_expires_in,
+        'refresh_expires_in': refresh_expires_in,
       }
 
       self.probate_access_token(token=access_token)
@@ -76,7 +83,11 @@ class TokenAPI(Resource):
     try:
       identity = get_jwt_identity()
       access_token = create_access_token(identity=identity)
-      ret = {'access_token': access_token}
+      access_expires_in = int(config.access_expires.total_seconds())
+      ret = {
+        'access_token': access_token,
+        'access_expires_in': access_expires_in,
+      }
 
       if request.json is not None and 'access_token' in request.json:
         if len(request.json['access_token']) == 0:
