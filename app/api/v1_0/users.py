@@ -74,6 +74,7 @@ class UserAPI(Resource):
     """Return user."""
     status = HTTPStatus.OK
     ret = {}
+    error_msg = ''
 
     try:
       query = User.query.filter_by(id=id)
@@ -84,10 +85,13 @@ class UserAPI(Resource):
       ret['url'] = get_url(tail_url='')
     except ApiException as e:
       status = e.status
-      ret = {'error': {'message': str(e)}}
-      logger.error(ret)
+      error_msg = str(e)
     except Exception as e:
-      ret = { 'error': { 'message': str(e) } }
-      logger.error(ret)
+      status.e = HTTPStatus.INTERNAL_SERVER_ERROR
+      error_msg = str(e)
+    finally:
+      if error_msg != '':
+        ret = {'error': {'message': error_msg}}
+        logger.error(ret)
 
     return make_response(jsonify(ret), status)
