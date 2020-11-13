@@ -1,3 +1,4 @@
+.#*
 *.sqlite
 
 .env.d/*.env*

@@ -30,6 +30,11 @@ class UserSchema(Schema):
   ==========
   https://marshmallow.readthedocs.io/en/stable/marshmallow.validate.html
   """
+  id = fields.Integer(
+    required=True,
+    validate=[
+      validate.Range(min=1, error='ID must be > 0.')
+    ])
   name = fields.String(
     required=True,
     validate=[

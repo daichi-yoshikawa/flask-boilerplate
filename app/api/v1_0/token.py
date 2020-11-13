@@ -8,17 +8,26 @@ from flask_jwt_extended import jwt_refresh_token_required, jwt_required
 from flask_jwt_extended.config import config
 from flask_restful import Resource
 from http import HTTPStatus
+from marshmallow import ValidationError, Schema
 from werkzeug.security import check_password_hash
 
 from app.auth.blacklist import blacklist
-from app.models.user import User
+from app.models.user import User, user_schema
 from app.utils.exceptions import ApiException
 
 
 logger = logging.getLogger(__name__)
 
 
-class TokenAPI(Resource):
+class RequestSchema:
+  class PostToken(Schema):
+    email = type(user_schema.fields['email'])(
+        required=True, validate=user_schema.fields['email'].validate)
+    password = type(user_schema.fields['password'])(
+        required=True, validate=user_schema.fields['password'].validate)
+
+
+class TokenApi(Resource):
   @jwt_required
   def get(self):
     """Validate access token."""
@@ -32,12 +41,18 @@ class TokenAPI(Resource):
 
     try:
       data = request.get_json()
-      query = User.query.filter_by(name=data['name'], email=data['email'])
+      if data is None:
+        raise ApiException('Request is empty.', status=HTTPStatus.BAD_REQUEST)
+      errors = RequestSchema.PostToken().validate(data)
+      if errors:
+        raise ValidationError(errors)
+
+      query = User.query.filter_by(email=data['email'])
       user = query.first()
 
       if user is None:
         raise ApiException(
-            f"User:({data['name']}, {data['email']}) not found.",
+            f"User:({data['email']}) not found.",
             status=HTTPStatus.NOT_FOUND)
       elif not check_password_hash(user.password, data['password']):
         raise ApiException('Wrong password.', status=HTTPStatus.UNAUTHORIZED)
@@ -56,6 +71,9 @@ class TokenAPI(Resource):
 
       self.probate_access_token(token=access_token)
       self.probate_refresh_token(token=refresh_token)
+    except ValidationError as e:
+      status = HTTPStatus.BAD_REQUEST
+      error_msg = e.normalized_messages()
     except ApiException as e:
       status = e.status
       error_msg = str(e)
@@ -65,6 +83,7 @@ class TokenAPI(Resource):
         status = HTTPStatus.BAD_REQUEST
         error_msg = 'Bad request was sent.'
     finally:
+      print('Finally')
       if error_msg != '':
         ret = {'error': {'message': error_msg}}
         logger.error(ret)

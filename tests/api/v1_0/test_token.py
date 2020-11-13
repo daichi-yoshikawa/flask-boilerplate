@@ -10,8 +10,8 @@ from helpers.utils import bearer_token
 
 url_token = '/api/v1_0/token/'
 
-me = dict(name='test001', email='test001@test', password='testtest')
-you = dict(name='test002', email='test002@test', password='testtest')
+me = dict(name='test001', email='test001@test.com', password='testtest')
+you = dict(name='test002', email='test002@test.com', password='testtest')
 
 @pytest.fixture(scope='class')
 def prepare_users(init_db):
@@ -29,6 +29,7 @@ def prepare_users(init_db):
 @pytest.fixture(scope='function')
 def tokens(prepare_users, client, headers):
   data = me.copy()
+  data.pop('name')
   ret = client.post(url_token, data=json.dumps(data), headers=headers)
 
   assert ret.status_code == HTTPStatus.OK
@@ -52,29 +53,34 @@ class TestTokenAPI:
     'param',
     [
       { # Normal
-        'request': dict(name='test001', email='test001@test', password='testtest'),
+        'request': dict(email='test001@test.com', password='testtest'),
         'expected': ['access_token', 'refresh_token'],
         'status_code': HTTPStatus.OK,
       },
-      { # Wrong name
-        'request': dict(name='test111', email='test001@test', password='testtest'),
-        'expected': {'error': {'message': 'User:(test111, test001@test) not found.'}},
-        'status_code': HTTPStatus.NOT_FOUND,
-      },
       { # Wrong email
-        'request': dict(name='test001', email='test111@test', password='testtest'),
-        'expected': {'error': {'message': 'User:(test001, test111@test) not found.'}},
+        'request': dict(email='test111@test.com', password='testtest'),
+        'expected': {'error': {'message': 'User:(test111@test.com) not found.'}},
         'status_code': HTTPStatus.NOT_FOUND,
       },
       { # Wrong password
-        'request': dict(name='test001', email='test001@test', password='test'),
+        'request': dict(email='test001@test.com', password='testtesttest'),
         'expected': {'error': {'message': 'Wrong password.'}},
         'status_code': HTTPStatus.UNAUTHORIZED,
       },
-      { # Wrong all info
-        'request': dict(name='test111', email='test111@test', password='test'),
-        'expected': {'error': {'message': 'User:(test111, test111@test) not found.'}},
+      { # Wrong email and password
+        'request': dict(email='test111@test.com', password='testtesttest'),
+        'expected': {'error': {'message': 'User:(test111@test.com) not found.'}},
         'status_code': HTTPStatus.NOT_FOUND,
+      },
+      { # Invalid email
+        'request': dict(email='test111@test', password='testtest'),
+        'expected': {'error': {'message': {'email': ['Not a valid email address.']}}},
+        'status_code': HTTPStatus.BAD_REQUEST,
+      },
+      { # Invalid password
+        'request': dict(email='test001@test.com', password='test'),
+        'expected': {'error': {'message': {'password': ['Password must be at least 8 characters.']}}},
+        'status_code': HTTPStatus.BAD_REQUEST,
       },
     ]
   )

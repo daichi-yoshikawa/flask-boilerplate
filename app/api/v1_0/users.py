@@ -9,15 +9,15 @@ from marshmallow import ValidationError, Schema
 from werkzeug.security import generate_password_hash
 
 from app.models import db
-from app.models.user import User, UserSchema, user_schema
+from app.models.user import User, user_schema
 from app.api.utils import get_url
 from app.utils.exceptions import ApiException
 
 logger = logging.getLogger(__name__)
 
 
-class UserListAPISchema:
-  class Post(Schema):
+class RequestSchema:
+  class PostUsers(Schema):
     name = type(user_schema.fields['name'])(
         required=True, validate=user_schema.fields['name'].validate)
     email = type(user_schema.fields['email'])(
@@ -26,7 +26,19 @@ class UserListAPISchema:
         required=True, validate=user_schema.fields['password'].validate)
 
 
-class UserListAPI(Resource):
+class ResponseSchema:
+  class GetUser(Schema):
+    id = type(user_schema.fields['id'])(
+        required=True, validate=user_schema.fields['name'].validate)
+    name = type(user_schema.fields['name'])(
+        required=True, validate=user_schema.fields['name'].validate)
+    email = type(user_schema.fields['email'])(
+        required=True, validate=user_schema.fields['email'].validate)
+    agreed_eula = type(user_schema.fields['agreed_eula'])(
+        required=True, validate=user_schema.fields['agreed_eula'].validate)
+
+
+class UserListApi(Resource):
   """
   GET: Return all users.
   POST: Create new user account.
@@ -43,7 +55,7 @@ class UserListAPI(Resource):
       data = request.get_json()
       if data is None:
         raise ApiException('Request is empty.', status=HTTPStatus.BAD_REQUEST)
-      errors = UserListAPISchema.Post().validate(data)
+      errors = RequestSchema.PostUsers().validate(data)
       if errors:
         raise ValidationError(errors)
 
@@ -66,7 +78,7 @@ class UserListAPI(Resource):
       error_msg = e.normalized_messages()
     except ApiException as e:
       status = e.status
-      error_smg = str(e)
+      error_msg = str(e)
     except Exception as e:
       error_msg = f'{type(e)} : {str(e)} '
       if status == HTTPStatus.CREATED:
@@ -81,7 +93,7 @@ class UserListAPI(Resource):
     return make_response(jsonify(ret), status)
 
 
-class UserAPI(Resource):
+class UserApi(Resource):
   """
   GET: Return user.
   POST: N/A
@@ -97,10 +109,12 @@ class UserAPI(Resource):
 
     try:
       query = User.query.filter_by(id=id)
-      ret = UserSchema(many=False).dump(query.first())
-      if not ret:
+      user = query.first()
+      if not user:
         raise ApiException(
           f'User ID:{id} was not found.', status=HTTPStatus.NOT_FOUND)
+
+      ret = ResponseSchema.GetUser().dump(user)
       ret['url'] = get_url(tail_url='')
     except ApiException as e:
       status = e.status

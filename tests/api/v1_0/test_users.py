@@ -10,17 +10,17 @@ from helpers.utils import join_url
 
 users = [
   {
-    'request': dict(name='test001', email='test001@test', password='testtest'),
+    'request': dict(name='test001', email='test001@test.com', password='testtest'),
     'expected': dict(url='http://localhost/api/v1_0/users/1/'),
     'status_code': HTTPStatus.CREATED,
   },
   {
-    'request': dict(name='test002', email='test002@test', password='testtest'),
+    'request': dict(name='test002', email='test002@test.com', password='testtest'),
     'expected': dict(url='http://localhost/api/v1_0/users/2/'),
     'status_code': HTTPStatus.CREATED,
   },
   {
-    'request': dict(name='test003', email='test003@test', password='testtest'),
+    'request': dict(name='test003', email='test003@test.com', password='testtest'),
     'expected': dict(url='http://localhost/api/v1_0/users/3/'),
     'status_code': HTTPStatus.CREATED,
   },
@@ -29,26 +29,41 @@ users = [
 users_to_signup = list(users)
 users_to_signup += [
   {
-    'request': dict(name='test001', email='test004@test', password='testtest'),
+    'request': dict(name='test001', email='test004@test.com', password='testtest'),
     'expected': dict(error={'message': 'Username:test001 is already used.'}),
     'status_code': HTTPStatus.CONFLICT,
   },
   {
-    'request': dict(name='test004', email='test001@test', password='testtest'),
-    'expected': dict(error={'message': 'Email:test001@test is already used.'}),
+    'request': dict(name='test004', email='test001@test.com', password='testtest'),
+    'expected': dict(error={'message': 'Email:test001@test.com is already used.'}),
     'status_code': HTTPStatus.CONFLICT,
   },
+  {
+    'request': dict(name='', email='test001@test.com', password='testtest'),
+    'expected': dict(error={'message': {'name': ['Name length must be 4 - 64.']}}),
+    'status_code': HTTPStatus.BAD_REQUEST,
+  },
+  {
+    'request': dict(name='test001', email='test.com', password='testtest'),
+    'expected': dict(error={'message': {'email': ['Not a valid email address.']}}),
+    'status_code': HTTPStatus.BAD_REQUEST,
+  },
+  {
+    'request': dict(name='test008', email='test008@test.com', password='t'),
+    'expected': dict(error={'message': {'password': ['Password must be at least 8 characters.']}}),
+    'status_code': HTTPStatus.BAD_REQUEST,
+  }
 ]
 
 users_to_get = [
   {
     'request': 1,
-    'expected': dict(id=1, name='test001', email='test001@test', agreed_eula=False, url='http://localhost/api/v1_0/users/1/'),
+    'expected': dict(id=1, name='test001', email='test001@test.com', agreed_eula=False, url='http://localhost/api/v1_0/users/1/'),
     'status_code': HTTPStatus.OK,
   },
   {
     'request': 3,
-    'expected': dict(id=3, name='test003', email='test003@test', agreed_eula=False, url='http://localhost/api/v1_0/users/3/'),
+    'expected': dict(id=3, name='test003', email='test003@test.com', agreed_eula=False, url='http://localhost/api/v1_0/users/3/'),
     'status_code': HTTPStatus.OK,
   },
   {
@@ -105,8 +120,7 @@ class TestUserAPI:
   def test_get_with_token(self, client, user, headers):
     n_users_start = db.session.query(User).count()
     iam = {
-      'name': 'test001',
-      'email': 'test001@test',
+      'email': 'test001@test.com',
       'password': 'testtest',
     }
     ret = client.post(
