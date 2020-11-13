@@ -1,17 +1,29 @@
+import json
 import logging
 
 from flask import jsonify, make_response, request
 from flask_jwt_extended import jwt_required
 from flask_restful import Resource
 from http import HTTPStatus
+from marshmallow import ValidationError, Schema
 from werkzeug.security import generate_password_hash
 
 from app.models import db
-from app.models.user import User, UserSchema
+from app.models.user import User, UserSchema, user_schema
 from app.api.utils import get_url
 from app.utils.exceptions import ApiException
 
 logger = logging.getLogger(__name__)
+
+
+class UserListAPISchema:
+  class Post(Schema):
+    name = type(user_schema.fields['name'])(
+        required=True, validate=user_schema.fields['name'].validate)
+    email = type(user_schema.fields['email'])(
+        required=True, validate=user_schema.fields['email'].validate)
+    password = type(user_schema.fields['password'])(
+        required=True, validate=user_schema.fields['password'].validate)
 
 
 class UserListAPI(Resource):
@@ -25,11 +37,15 @@ class UserListAPI(Resource):
     """Sign up"""
     status = HTTPStatus.CREATED
     ret = {}
+    error_msg = {}
 
     try:
       data = request.get_json()
       if data is None:
         raise ApiException('Request is empty.', status=HTTPStatus.BAD_REQUEST)
+      errors = UserListAPISchema.Post().validate(data)
+      if errors:
+        raise ValidationError(errors)
 
       if User.query.filter_by(name=data['name']).count() > 0:
         raise ApiException(
@@ -45,19 +61,22 @@ class UserListAPI(Resource):
       db.session.commit()
 
       ret['url'] = get_url(tail_url=user.id)
+    except ValidationError as e:
+      status = HTTPStatus.BAD_REQUEST
+      error_msg = e.normalized_messages()
     except ApiException as e:
       status = e.status
-      ret = {'error': {'message': str(e)}}
-      db.session.rollback()
-      logger.error(ret)
+      error_smg = str(e)
     except Exception as e:
-      db.session.rollback()
-      msg = str(e)
+      error_msg = f'{type(e)} : {str(e)} '
       if status == HTTPStatus.CREATED:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
-        msg = 'Signup failed due to internal server error.'
-      ret = { 'error': { 'message': msg } }
-      logger.error(ret)
+        error_msg = f'Signup failed due to internal server error. ' + error_msg
+    finally:
+      if status != HTTPStatus.CREATED:
+        db.session.rollback()
+        ret = { 'error': { 'message': error_msg } }
+        logger.error(ret)
 
     return make_response(jsonify(ret), status)
 

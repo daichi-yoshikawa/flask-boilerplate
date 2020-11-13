@@ -6,7 +6,7 @@ from flask import Flask
 
 from app.auth.blacklist import blacklist
 from app.auth.jwt import jwt
-from app.models import db, ma, migrate
+from app.models import db, migrate
 from config import config, get_mode_from_env, load_dotenv
 
 
@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 def init_db(app):
   db.init_app(app)
-  ma.init_app(app)
   migrate.init_app(app, db)
 
 

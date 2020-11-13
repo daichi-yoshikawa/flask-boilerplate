@@ -7,11 +7,9 @@ since they refer to the instance and circular import must be avoided.
 3. app.models.(__init__.py) imports the class defined in app.models.***.
 """
 from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 
 db = SQLAlchemy()
-ma = Marshmallow()
 migrate = Migrate()
 
 from .user import User

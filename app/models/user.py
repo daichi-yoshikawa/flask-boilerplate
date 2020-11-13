@@ -1,9 +1,11 @@
 from datetime import datetime
 
+from marshmallow import Schema
+from marshmallow import fields, validate
 from sqlalchemy import func
 from sqlalchemy.sql import expression
 
-from app.models import db, ma
+from app.models import db
 
 
 class User(db.Model):
@@ -22,8 +24,26 @@ class User(db.Model):
            f'eula={self.agreed_eula})'
 
 
-class UserSchema(ma.Schema):
-  class Meta:
-    fields = ('id', 'name', 'email', 'agreed_eula')
+class UserSchema(Schema):
+  """
+  References
+  ==========
+  https://marshmallow.readthedocs.io/en/stable/marshmallow.validate.html
+  """
+  name = fields.String(
+    required=True,
+    validate=[
+      validate.Length(
+          min=4, max=64, error='Name length must be {min} - {max}.'),
+    ])
+  email = fields.Email(required=True)
+  password = fields.String(
+    required=True,
+    validate=[
+      validate.Length(
+          min=8, error='Password must be at least {min} characters.'),
+    ])
+  agreed_eula = fields.Boolean()
 
-  
+
+user_schema = UserSchema()
