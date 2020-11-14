@@ -11,17 +11,17 @@ from helpers.utils import join_url
 users = [
   {
     'request': dict(name='test001', email='test001@test.com', password='testtest'),
-    'expected': dict(url='http://localhost/api/v1_0/users/1/'),
+    'expected': dict(link={'self': 'http://localhost/api/v1_0/users/1/'}),
     'status_code': HTTPStatus.CREATED,
   },
   {
     'request': dict(name='test002', email='test002@test.com', password='testtest'),
-    'expected': dict(url='http://localhost/api/v1_0/users/2/'),
+    'expected': dict(link={'self': 'http://localhost/api/v1_0/users/2/'}),
     'status_code': HTTPStatus.CREATED,
   },
   {
     'request': dict(name='test003', email='test003@test.com', password='testtest'),
-    'expected': dict(url='http://localhost/api/v1_0/users/3/'),
+    'expected': dict(link={'self': 'http://localhost/api/v1_0/users/3/'}),
     'status_code': HTTPStatus.CREATED,
   },
 ]
@@ -58,12 +58,12 @@ users_to_signup += [
 users_to_get = [
   {
     'request': 1,
-    'expected': dict(id=1, name='test001', email='test001@test.com', agreed_eula=False, url='http://localhost/api/v1_0/users/1/'),
+    'expected': dict(id=1, name='test001', email='test001@test.com', agreed_eula=False, link={'self': 'http://localhost/api/v1_0/users/1/'}),
     'status_code': HTTPStatus.OK,
   },
   {
     'request': 3,
-    'expected': dict(id=3, name='test003', email='test003@test.com', agreed_eula=False, url='http://localhost/api/v1_0/users/3/'),
+    'expected': dict(id=3, name='test003', email='test003@test.com', agreed_eula=False, link={'self': 'http://localhost/api/v1_0/users/3/'}),
     'status_code': HTTPStatus.OK,
   },
   {

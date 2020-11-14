@@ -72,7 +72,7 @@ class UserListApi(Resource):
       db.session.add(user)
       db.session.commit()
 
-      ret['url'] = get_url(tail_url=user.id)
+      ret['link'] = {'self': get_url(tail_url=user.id)}
     except ValidationError as e:
       status = HTTPStatus.BAD_REQUEST
       error_msg = e.normalized_messages()
@@ -115,7 +115,7 @@ class UserApi(Resource):
           f'User ID:{id} was not found.', status=HTTPStatus.NOT_FOUND)
 
       ret = ResponseSchema.GetUser().dump(user)
-      ret['url'] = get_url(tail_url='')
+      ret['link'] = {'self': get_url(tail_url='')}
     except ApiException as e:
       status = e.status
       error_msg = str(e)
