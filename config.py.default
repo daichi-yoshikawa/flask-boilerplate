@@ -6,6 +6,14 @@ References:
 - SQLALCHEMY_BINDS: https://flask-sqlalchemy.palletsprojects.com/en/2.x/binds/
 - JWT Options: https://flask-jwt-extended.readthedocs.io/en/stable/options/
 """
+"""
+This module implements config used by flask application.
+Config used not only by flask application will be defined by dotenv.
+
+References:
+- SQLALCHEMY_BINDS: https://flask-sqlalchemy.palletsprojects.com/en/2.x/binds/
+- JWT Options: https://flask-jwt-extended.readthedocs.io/en/stable/options/
+"""
 import os
 
 import dotenv

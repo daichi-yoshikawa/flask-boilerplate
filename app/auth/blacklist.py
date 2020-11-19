@@ -1,13 +1,16 @@
 import logging
-from collections import namedtuple
-
 import redis
+from collections import namedtuple
+from sqlalchemy import func
+
+from app.models import db
+from app.models.revoked_token import RevokedToken
 
 
 logger = logging.getLogger(__name__)
 
 __BlacklistStorage = namedtuple('BlacklistStorage', ['types'])
-BlacklistStorage = __BlacklistStorage(['redis', 'memory'])
+BlacklistStorage = __BlacklistStorage(['memory', 'redis', 'database'])
 
 
 class Storage:
@@ -124,6 +127,80 @@ class RedisStorage(Storage):
     self.storage.flushdb()
 
 
+class DatabaseStorage(Storage):
+  def __init__(self):
+    self.storage = None
+
+  def init_app(self, app):
+    self.token_expires = {
+      'access_token': int(app.config['JWT_ACCESS_TOKEN_EXPIRES']),
+      'refresh_token': int(app.config['JWT_REFRESH_TOKEN_EXPIRES']),
+    }
+
+  def get(self, jti):
+    query = RevokedToken.query.filter_by(jti=jti)
+    token = query.first()
+    ret = None if token is None else token.revoked
+    return ret
+
+  def probate_access_token(self, jti):
+    self.probate_token_impl(jti, token_type_hint='access_token')
+
+  def probate_refresh_token(self, jti):
+    self.probate_token_impl(jti, token_type_hint='refresh_token')
+
+  def probate_token_impl(self, jti, token_type_hint):
+    query = RevokedToken.query.filter_by(
+        jti=jti, token_type_hint=token_type_hint)
+    token = query.first()
+
+    if token is None:
+      revoked_token = RevokedToken(**{
+        'jti': jti,
+        'revoked': False,
+        'token_type_hint': token_type_hint,
+        'expires_in': self.token_expires[token_type_hint],
+        'revoked_at': None,
+      })
+      db.session.add(revoked_token)
+    else:
+      token.revoked = False
+    db.session.commit()
+
+  def revoke_access_token(self, jti):
+    self.revoke_token_impl(jti, token_type_hint='access_token')
+
+  def revoke_refresh_token(self, jti):
+    self.revoke_token_impl(jti, token_type_hint='refresh_token')
+
+  def revoke_token_impl(self, jti, token_type_hint):
+    query = RevokedToken.query.filter_by(
+        jti=jti, token_type_hint=token_type_hint)
+    token = query.first()
+
+    if token is None:
+      revoked_token = RevokedToken(**{
+        'jti': jti,
+        'revoked': True,
+        'token_type_hint': token_type_hint,
+        'expires_in': self.token_expires[token_type_hint],
+        'revoked_at': func.now(),
+      })
+      db.session.add(revoked_token)
+    else:
+      token.revoked = True
+      token.revoked_at = func.now()
+    db.session.commit()
+
+  def delete(self, jti):
+    RevokedToken.query.filter_by(jti=jti).delete()
+    db.session.commit()
+
+  def flushall(self):
+    db.session.query(RevokedToken).delete()
+    db.session.commit()
+
+
 class Blacklist:
   def __init__(self):
     self.storage = None
@@ -138,6 +215,8 @@ class Blacklist:
       self.storage = MemoryStorage()
     elif storage_type == 'redis':
       self.storage = RedisStorage()
+    elif storage_type == 'database':
+      self.storage = DatabaseStorage()
     else:
       msg = f'Not supported storage type: {storage_type}.'
       raise ValueError(msg)

@@ -124,7 +124,7 @@ class UserApi(Resource):
       error_msg = str(e)
     finally:
       if error_msg != '':
-        ret = {'error': {'message': error_msg}}
+        ret = { 'error': { 'message': error_msg } }
         logger.error(ret)
 
     return make_response(jsonify(ret), status)

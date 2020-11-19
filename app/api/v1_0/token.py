@@ -8,6 +8,7 @@ from flask_jwt_extended import jwt_refresh_token_required, jwt_required
 from flask_jwt_extended.config import config
 from flask_restful import Resource
 from http import HTTPStatus
+from jwt.exceptions import ExpiredSignatureError
 from marshmallow import ValidationError, Schema
 from werkzeug.security import check_password_hash
 
@@ -17,6 +18,22 @@ from app.utils.exceptions import ApiException
 
 
 logger = logging.getLogger(__name__)
+
+
+def try_revoke_access_token(token):
+  try:
+    jti = get_jti(encoded_token=token)
+    blacklist.revoke_access_token(jti)
+  except ExpiredSignatureError as e:
+    logger.warning(f'{str(type(e))}: {str(e)}')
+
+
+def try_revoke_refresh_token(token):
+  try:
+    jti = get_jti(encoded_token=token)
+    blacklist.revoke_refresh_token(jti)
+  except ExpiredSignatureError as e:
+    logger.warning(f'{str(type(e))}: {str(e)}')
 
 
 class RequestSchema:
@@ -83,9 +100,8 @@ class TokenApi(Resource):
         status = HTTPStatus.BAD_REQUEST
         error_msg = 'Bad request was sent.'
     finally:
-      print('Finally')
       if error_msg != '':
-        ret = {'error': {'message': error_msg}}
+        ret = { 'error': { 'message': error_msg } }
         logger.error(ret)
 
     return make_response(jsonify(ret), status)
@@ -113,8 +129,7 @@ class TokenApi(Resource):
           msg = 'Given access token is empty.'
           raise ApiException(msg, status=HTTPStatus.BAD_REQUEST)
         old_access_token = request.json['access_token']
-        old_access_jti = get_jti(encoded_token=old_access_token)
-        blacklist.revoke_access_token(old_access_jti)
+        try_revoke_access_token(old_access_token)
       else:
         msg = 'Access token is not in body.'
         raise ApiException(msg, status=HTTPStatus.BAD_REQUEST)
@@ -125,10 +140,10 @@ class TokenApi(Resource):
       error_msg = str(e)
     except Exception as e:
       status = HTTPStatus.INTERNAL_SERVER_ERROR
-      error_msg = str(e)
+      error_msg = f'{str(type(e))}: {str(e)}'
     finally:
       if error_msg != '':
-        ret = {'error': {'message': error_msg}}
+        ret = { 'error': { 'message': error_msg } }
         logger.error(ret)
 
     return make_response(jsonify(ret), status)
@@ -148,8 +163,7 @@ class TokenApi(Resource):
           msg = 'Given refresh token is empty.'
           raise ApiException(msg, status=HTTPStatus.BAD_REQUEST)
         refresh_token = request.json['refresh_token']
-        refresh_jti = get_jti(encoded_token=refresh_token)
-        blacklist.revoke_refresh_token(refresh_jti)
+        try_revoke_refresh_token(refresh_token)
       else:
         msg = 'Refresh token is not in body.'
         raise ApiException(msg, status=HTTPStatus.BAD_REQUEST)
@@ -167,7 +181,7 @@ class TokenApi(Resource):
           blacklist.probate_access_token(access_jti)
         if 'refresh_jti' in locals() and refresh_jti is not None:
           blacklist.probate_refresh_token(refresh_jti)
-        ret = {'error': {'message': error_msg}}
+        ret = { 'error': { 'message': error_msg } }
         logger.error(ret)
 
     return make_response(jsonify(ret), status)
@@ -182,7 +196,7 @@ class TokenApi(Resource):
     jti = get_jti(encoded_token=token)
     if blacklist.has_as_key(jti):
       raise ApiException(
-          f'Given {token_type_hint} is already in blacklist.',
+          f'Given {token_type_hint}:{jti} is already in blacklist.',
           status=HTTPStatus.UNAUTHORIZED)
 
     if token_type_hint == 'access_token':
