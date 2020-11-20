@@ -40,9 +40,9 @@ if __name__ == '__main__':
       cmd.extend(['--reload'])
     if config.daemon:
       cmd.extend(['--daemon'])
-    cmd.extend(['-b', config.bind])
-    cmd.extend(['-n', config.proc_name])
-    cmd.extend(['-w', str(config.workers)])
+    cmd.extend(['--bind', config.bind])
+    cmd.extend(['--name', config.proc_name])
+    cmd.extend(['--workers', str(config.workers)])
     cmd.extend([f"{config.app}"])
 
     logger.info(cmd)
