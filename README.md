@@ -48,7 +48,7 @@ Also, remove the the following line and class DatabaseStorage in app/auth/blackl
 from app.models.revoked_token import RevokedToken
 ```
 
-## Try example
+## Usage
 ### DB initialization/migration
 ```
 $ FLASK_ENV=<mode> FLASK_APP=app flask db init
@@ -62,11 +62,67 @@ At the root dir of the project, run the follow.
 $ FLASK_ENV=<mode> FLASK_APP=app flask run
 ```
 
-### Run with gunicorn
+### With gunicorn (simply call gunicorn)
 At the root dir of the project, run the follow.
 ```
 $ FLASK_ENV=<mode> python gunicorn.py
 ```
+
+### With gunicorn and systemd
+(Assuming Linux is used.)<br>
+Create a symbolic link of XXXX.service file(eg. flask-gunicorn.service) and put it under /etc/systemd/system directory.
+```
+$ cd root/to/flask/application
+$ sudo ln -s $(pwd)/flask-gunicorn.service /etc/systemd/system
+```
+
+Make sure the service uses correct .env file. See EnvironmentFile parameter under Service in service file.
+```
+[Service]
+EnvironmentFile=absolute/path/to/.env.d/.env.<mode>
+
+(Example)
+[Service]
+EnvironmentFile=/home/ubuntu/work/flask-app/.env.d/.env.production
+```
+
+Reload daemon and start gunicorn manually.
+```
+$ sudo systemctl daemon-reload
+$ sudo systemctl start flask-gunicorn
+```
+
+Make sure if it's successfully running.
+```
+$ ps aux | grep flask-gunicorn
+```
+
+If no result is seen, see log.
+```
+$ journalctl -xe
+```
+
+To update gunicorn parameters while it's running as a daemon, firstly edit .env file(eg. GUNICORN_WORKERS=1 -> GUNICORN_WORKERS=4) or service file directly. And then call the follow.
+```
+$ sudo systemctl restart flask-gunirocn
+```
+
+### To kill gunicorn launched by systemd
+As far as Restart=always is in service file, the service is re-launched even if the process is down. Firstly, comment out the line as below.
+```
+[Service]
+...
+# Restart=always
+```
+Then check process ids of gunicorn.
+```
+$ ps aux | grep flask-gunicorn
+```
+Send signal to shutdown the processes.
+```
+$ kill -9 <process ID(s)>
+```
+You'll see multiple processes even if the number of workers is 1. One of the process is a master process and if you shutdown it all other associated workers are also gone.
 
 ## Execute pytest
 If you need to access database, make sure that DB migration is already done.<br>

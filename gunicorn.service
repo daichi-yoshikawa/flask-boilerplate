@@ -1,0 +1,17 @@
+[Unit]
+Description=Gunicorn to execute flask application
+After=network.target
+
+[Service]
+EnvironmentFile=/home/daichi/work/boilerplates/flask-boilerplate/.env.d/.env.development
+WorkingDirectory=/home/daichi/work/boilerplates/flask-boilerplate
+ExecStart=/home/daichi/.pyenv/versions/venv383flask/bin/gunicorn \
+  --env FLASK_ENV=development \
+  --bind ${GUNICORN_HOST}:${GUNICORN_PORT} \
+  --name ${GUNICORN_PROC_NAME} \
+  --workers ${GUNICORN_WORKERS} \
+  ${GUNICORN_APP}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
