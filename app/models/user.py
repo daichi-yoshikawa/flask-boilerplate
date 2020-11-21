@@ -15,13 +15,11 @@ class User(db.Model):
   name = db.Column(db.String(128), unique=True, nullable=False)
   email = db.Column(db.String(128), unique=True, nullable=False)
   password = db.Column(db.String(128), unique=False, nullable=False)
-  agreed_eula = db.Column(db.Boolean, nullable=False, server_default=expression.false())
   created_at = db.Column(db.DateTime, server_default=func.now())
   updated_at = db.Column(db.DateTime, server_default=func.now(), server_onupdate=func.now())
 
   def __repr__(self):
-    return f'User(id={self.id}, name={self.name}, email={self.email}, ' +\
-           f'eula={self.agreed_eula})'
+    return f'User(id={self.id}, name={self.name}, email={self.email})'
 
 
 class UserSchema(Schema):
@@ -48,7 +46,6 @@ class UserSchema(Schema):
       validate.Length(
           min=8, error='Password must be at least {min} characters.'),
     ])
-  agreed_eula = fields.Boolean()
 
 
 user_schema = UserSchema()

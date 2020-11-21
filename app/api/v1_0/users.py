@@ -34,8 +34,6 @@ class ResponseSchema:
         required=True, validate=user_schema.fields['name'].validate)
     email = type(user_schema.fields['email'])(
         required=True, validate=user_schema.fields['email'].validate)
-    agreed_eula = type(user_schema.fields['agreed_eula'])(
-        required=True, validate=user_schema.fields['agreed_eula'].validate)
 
 
 class UserListApi(Resource):
