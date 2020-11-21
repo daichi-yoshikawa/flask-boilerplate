@@ -68,6 +68,15 @@ At the root dir of the project, run the follow.
 $ FLASK_ENV=<mode> python gunicorn.py
 ```
 
+### With gunicorn and docker-compose
+1. Edit FLASK_TEMPLATE_DIR and FLASK_STATIC_DIR in .env.d/.env.XXXX file.
+2. Edit volumes in docker-compose.yml. /root/vue-app/dist must correspond to the directory which containing index.html, that is, FLASK_TEMPLATE_DIR.
+3. Do the follow.
+```
+$ docker-compose build
+$ FLASK_ENV=<mode> docker-compose run -d --name flask-gunicorn-server flask-gunicorn
+```
+
 ### With gunicorn and systemd
 (Assuming Linux is used.)<br>
 Create a symbolic link of XXXX.service file(eg. flask-gunicorn.service) and put it under /etc/systemd/system directory.

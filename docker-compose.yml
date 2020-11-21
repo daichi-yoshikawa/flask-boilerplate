@@ -1,0 +1,15 @@
+version: "3"
+services:
+  flask-gunicorn:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flask-gunicorn
+    container_name: "flask-gunicorn-server"
+    environment:
+      - FLASK_ENV
+    volumes:
+      - .:/root/flask-app
+      - ../vue-boilerplate/dist:/root/vue-app/dist
+    network_mode: "host"
+    command: python gunicorn.py
