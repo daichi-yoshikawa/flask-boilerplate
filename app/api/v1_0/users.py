@@ -24,6 +24,8 @@ class RequestSchema:
         required=True, validate=user_schema.fields['email'].validate)
     password = type(user_schema.fields['password'])(
         required=True, validate=user_schema.fields['password'].validate)
+    role_id = type(user_schema.fields['role_id'])(
+        required=True, validate=user_schema.fields['role_id'].validate)
 
 
 class ResponseSchema:
@@ -56,6 +58,7 @@ class UserListApi(Resource):
       errors = RequestSchema.PostUsers().validate(data)
       if errors:
         raise ValidationError(errors)
+      data = RequestSchema.PostUsers().dump(data)
 
       if User.query.filter_by(name=data['name']).count() > 0:
         raise ApiException(

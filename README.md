@@ -56,6 +56,11 @@ $ FLASK_ENV=<mode> flask db migrate -m "initial migration"
 $ FLASK_ENV=<mode> flask db upgrade
 ```
 
+### Insert default data into database.
+```
+$ FLASK_ENV=<mode> python insert_default_data.py
+```
+
 ### Run with flask development server
 At the root dir of the project, run the follow.
 ```

@@ -10,17 +10,20 @@ from helpers.utils import join_url
 
 users = [
   {
-    'request': dict(name='test001', email='test001@test.com', password='testtest'),
+    'request': dict(name='test001', email='test001@test.com', password='testtest',
+                    role_id=1),
     'expected': dict(link={'self': 'http://localhost/api/v1_0/users/1/'}),
     'status_code': HTTPStatus.CREATED,
   },
   {
-    'request': dict(name='test002', email='test002@test.com', password='testtest'),
+    'request': dict(name='test002', email='test002@test.com', password='testtest',
+                    role_id=1),
     'expected': dict(link={'self': 'http://localhost/api/v1_0/users/2/'}),
     'status_code': HTTPStatus.CREATED,
   },
   {
-    'request': dict(name='test003', email='test003@test.com', password='testtest'),
+    'request': dict(name='test003', email='test003@test.com', password='testtest',
+                    role_id=1),
     'expected': dict(link={'self': 'http://localhost/api/v1_0/users/3/'}),
     'status_code': HTTPStatus.CREATED,
   },
@@ -29,27 +32,32 @@ users = [
 users_to_signup = list(users)
 users_to_signup += [
   {
-    'request': dict(name='test001', email='test004@test.com', password='testtest'),
+    'request': dict(name='test001', email='test004@test.com', password='testtest',
+                    role_id=1),
     'expected': dict(error={'message': 'Username:test001 is already used.'}),
     'status_code': HTTPStatus.CONFLICT,
   },
   {
-    'request': dict(name='test004', email='test001@test.com', password='testtest'),
+    'request': dict(name='test004', email='test001@test.com', password='testtest',
+                    role_id=1),
     'expected': dict(error={'message': 'Email:test001@test.com is already used.'}),
     'status_code': HTTPStatus.CONFLICT,
   },
   {
-    'request': dict(name='', email='test001@test.com', password='testtest'),
+    'request': dict(name='', email='test001@test.com', password='testtest',
+                    role_id=1),
     'expected': dict(error={'message': {'name': ['Name length must be 4 - 64.']}}),
     'status_code': HTTPStatus.BAD_REQUEST,
   },
   {
-    'request': dict(name='test001', email='test.com', password='testtest'),
+    'request': dict(name='test001', email='test.com', password='testtest',
+                    role_id=1),
     'expected': dict(error={'message': {'email': ['Not a valid email address.']}}),
     'status_code': HTTPStatus.BAD_REQUEST,
   },
   {
-    'request': dict(name='test008', email='test008@test.com', password='t'),
+    'request': dict(name='test008', email='test008@test.com', password='t',
+                    role_id=1),
     'expected': dict(error={'message': {'password': ['Password must be at least 8 characters.']}}),
     'status_code': HTTPStatus.BAD_REQUEST,
   }

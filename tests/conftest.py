@@ -8,6 +8,8 @@ os.environ['FLASK_APP'] = 'app'
 import pytest
 
 from app import create_app
+from app.models import db
+from app.models.role import Role
 
 
 @pytest.fixture(scope='session')
@@ -31,7 +33,14 @@ def init_db(app):
 
   with app.app_context():
     db.create_all()
+
+    for role_name in ['admin', 'player']:
+      row = Role(**{'name': role_name})
+      db.session.add(row)
+    db.session.commit()
+
     yield db
+
     db.drop_all()
 
 

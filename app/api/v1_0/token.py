@@ -63,6 +63,7 @@ class TokenApi(Resource):
       errors = RequestSchema.PostToken().validate(data)
       if errors:
         raise ValidationError(errors)
+      data = RequestSchema.PostToken().dump(data)
 
       query = User.query.filter_by(email=data['email'])
       user = query.first()

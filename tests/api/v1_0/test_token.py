@@ -10,8 +10,8 @@ from helpers.utils import bearer_token
 
 url_token = '/api/v1_0/token/'
 
-me = dict(name='test001', email='test001@test.com', password='testtest')
-you = dict(name='test002', email='test002@test.com', password='testtest')
+me = dict(name='test001', email='test001@test.com', password='testtest', role_id=1)
+you = dict(name='test002', email='test002@test.com', password='testtest', role_id=1)
 
 @pytest.fixture(scope='class')
 def prepare_users(init_db):
@@ -30,6 +30,7 @@ def prepare_users(init_db):
 def tokens(prepare_users, client, headers):
   data = me.copy()
   data.pop('name')
+  data.pop('role_id')
   ret = client.post(url_token, data=json.dumps(data), headers=headers)
 
   assert ret.status_code == HTTPStatus.OK
